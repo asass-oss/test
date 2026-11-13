@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jawaal – Identity & Face Verification (Standalone)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--page:#f7f8fa;--card:#fff;--text:#111827;--muted:#4b5563;--line:#d9dde3;--blue:#1146c9;--blue2:#0d3aa8;--input:#fff;--gray:#c9ccd1;--gold:#7a4a12;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--page:#0b0d12;--card:#151a23;--text:#f1f3f7;--muted:#a3abb8;--line:#2b3340;--input:#0f1218;--gray:#3a4250;--gold:#e0b36b;--blue:#4c7dff;--blue2:#3a68e6}}
+:root[data-theme="dark"]{--bg:#0f1218;--page:#0b0d12;--card:#151a23;--text:#f1f3f7;--muted:#a3abb8;--line:#2b3340;--input:#0f1218;--gray:#3a4250;--gold:#e0b36b;--blue:#4c7dff;--blue2:#3a68e6}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif}
+header{background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:12px 40px;gap:16px}
+.card{max-width:1390px;margin:24px auto 40px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 52px 40px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.auth{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;line-height:1.35}
+.uae{display:flex;align-items:center;gap:10px;color:var(--gold);text-align:right;font-weight:600;line-height:1.4}
+.uae small{display:block;font-size:14px}
+.hero{text-align:center;margin-top:-22px}
+.hero h1{margin:6px 0 0;font-size:32px;line-height:1.3}
+.hero h2{margin:0;font-size:32px;font-weight:600;font-family:"Segoe UI",Arial,sans-serif}
+.hero p{margin:10px 0 0;color:var(--muted);font-size:18px}
+.form{max-width:1180px;margin:34px auto 0;border:1px solid var(--line);border-radius:14px;padding:18px 28px 38px}
+.form h3{margin:0;font-size:24px;line-height:1.25}
+.form h3 span{display:block;font-size:19px;font-family:"Segoe UI",Arial,sans-serif}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 52px;margin-top:14px}
+.field label{display:block;font-size:15px;font-weight:700;line-height:1.3}
+.field label span{display:block;font-weight:400;color:var(--muted);font-size:15px;font-family:"Segoe UI",Arial,sans-serif}
+.input{display:flex;align-items:center;gap:14px;margin-top:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--input);height:48px;padding:0 14px;color:var(--muted)}
+.input:focus-within{border-color:var(--blue);outline:2px solid color-mix(in srgb,var(--blue) 30%,transparent)}
+.input input{flex:1;border:0;background:transparent;font:inherit;font-size:16px;color:var(--text);outline:0;min-width:0}
+.drop{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:8px;height:76px;border:1.5px dashed var(--line);border-radius:8px;cursor:pointer;color:var(--muted)}
+.drop b{display:block;color:var(--text);font-weight:500;font-size:15px}.drop small{font-size:14px}
+.drop input{display:none}
+.err{color:#c62828;font-size:13px;min-height:16px;margin-top:4px}
+
+.face-box{grid-column:1/-1;text-align:center;background:rgba(0,0,0,0.02);border:1.5px dashed var(--line);border-radius:12px;padding:20px}
+.camera-container{position:relative;width:220px;height:220px;margin:12px auto;border-radius:50%;overflow:hidden;border:3px solid var(--blue);background:#000;display:flex;align-items:center;justify-content:center}
+.camera-container video, .camera-container canvas, .camera-container img{width:100%;height:100%;object-fit:cover}
+.cam-btn{background:var(--blue);color:#fff;border:0;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit}
+.cam-btn:hover{background:var(--blue2)}
+
+.cta{display:flex;margin:30px auto 0;width:min(645px,100%);background:var(--blue);color:#fff;border:0;border-radius:6px;padding:12px;gap:18px;align-items:center;justify-content:center;font:inherit;font-size:19px;line-height:1.3;cursor:pointer}
+.cta:hover{background:var(--blue2)}
+.cta span{display:block;font-family:"Segoe UI",Arial,sans-serif;font-size:18px}
+.spinner{width:40px;height:40px;border:4px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="top">
+    <div class="auth">
+      <svg width="80" height="60" viewBox="0 0 80 60" fill="none"><path d="M4 8c20 4 40 14 56 34" stroke="#c4161c" stroke-width="3"/><path d="M10 6c24 0 44 14 60 22" stroke="#1b7f3b" stroke-width="3"/><path d="M14 40c16-18 40-22 60-14" stroke="#111" stroke-width="3"/></svg>
+      <div dir="rtl" style="text-align:right"><div style="font-size:14px">الهيئة الاتحادية للهوية والجنسية والجمارك وأمن المنافذ</div><div style="font-size:9px;font-family:Arial,sans-serif;direction:ltr;text-align:left">FEDERAL AUTHORITY FOR IDENTITY, CITIZENSHIP, CUSTOMS &amp; PORT SECURITY</div></div>
+    </div>
+    <div class="uae">
+      <div dir="rtl" style="text-align:right">الإمارات العربية المتحدة<small style="direction:ltr;font-family:Arial,sans-serif;text-align:right">UNITED ARAB EMIRATES</small></div>
+      <svg width="52" height="66" viewBox="0 0 52 66"><path d="M26 4c8 6 20 6 24 16-6 2-10 6-12 12l-12 4-12-4c-2-6-6-10-12-12C6 10 18 10 26 4z" fill="#8a6a2f"/><rect x="16" y="34" width="20" height="24" rx="4" fill="#b0262b"/><rect x="16" y="46" width="20" height="6" fill="#1b7f3b"/></svg>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h1>التحقق من الهوية والوجه</h1>
+    <h2>Identity & Face Verification</h2>
+    <p dir="rtl">يرجى إدخال بيانات الهوية والتقاط صورة للوجه لمطابقتها وإتمام الطلب.</p>
+  </section>
+
+  <form class="form" id="f" novalidate>
+    <h3>بيانات التحقق<span>Verification Details</span></h3>
+    <div class="grid">
+      <div class="field">
+        <label for="name" dir="rtl" style="text-align:left">الاسم الكامل<span>Full Name</span></label>
+        <div class="input"><input id="name" placeholder="Enter your full name" autocomplete="name"></div>
+        <div class="err" id="e-name"></div>
+      </div>
+      <div class="field">
+        <label for="eid" dir="rtl" style="text-align:left">رقم الهوية الإماراتية<span>Emirates ID Number</span></label>
+        <div class="input"><input id="eid" placeholder="784-XXXX-XXXXXXX-X" inputmode="numeric" maxlength="18" dir="ltr"></div>
+        <div class="err" id="e-eid"></div>
+      </div>
+      <div class="field">
+        <label for="exp" dir="rtl" style="text-align:left">تاريخ انتهاء الهوية<span>Expiry Date</span></label>
+        <div class="input"><input id="exp" placeholder="DD / MM / YYYY" inputmode="numeric" maxlength="14"></div>
+        <div class="err" id="e-exp"></div>
+      </div>
+      <div class="field">
+        <label dir="rtl" style="text-align:left">رفع صورة الهوية<span>Upload Emirates ID</span></label>
+        <label class="drop" for="file"><span><b id="fn">اختر صورة الهوية</b><small>JPG, PNG (Max 5 MB)</small></span><input id="file" type="file" accept=".jpg,.jpeg,.png"></label>
+        <div class="err" id="e-file"></div>
+      </div>
+
+      <div class="face-box">
+        <label style="font-weight:700; margin-bottom:4px; display:block;">التحقق من الوجه (Selfie Verification) <em>*</em></label>
+        <span style="font-size:13px; color:var(--muted)">يرجى وضع وجهك داخل الدائرة والتقاط الصورة</span>
+        
+        <div class="camera-container">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas" style="display:none;"></canvas>
+          <img id="photoPreview" style="display:none;" alt="Captured Face"/>
+        </div>
+        
+        <button type="button" id="snapBtn" class="cam-btn">📸 التقاط الصورة</button>
+        <div class="err" id="e-face"></div>
+      </div>
+    </div>
+
+    <button class="cta" type="submit"><div>تحقق ومتابعة<span>Verify &amp; Continue</span></div></button>
+  </form>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let uploadedFileBase64 = null;
+let faceImageBase64 = null;
+
+async function initCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    $('video').srcObject = stream;
+  } catch (err) {
+    $('e-face').textContent = 'تعذر الوصول إلى الكاميرا. يرجى السماح بالصلاحيات.';
+  }
+}
+initCamera();
+
+$('snapBtn').addEventListener('click', () => {
+  const video = $('video');
+  const canvas = $('canvas');
+  const preview = $('photoPreview');
+  
+  if(video.readyState !== video.HAVE_ENOUGH_DATA) {
+    alert('الكاميرا لم تصبح جاهزة بعد، انتظر قليلاً.');
+    return;
+  }
+
+  canvas.width = video.videoWidth || 300;
+  canvas.height = video.videoHeight || 300;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  faceImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  
+  preview.src = faceImageBase64;
+  preview.style.display = 'block';
+  video.style.display = 'none';
+  $('snapBtn').textContent = '🔄 إعادة التقاط';
+  $('e-face').textContent = '';
+});
+
+$('eid').addEventListener('input',e=>{
+  let d=e.target.value.replace(/\D/g,'').slice(0,15);
+  let p=[d.slice(0,3),d.slice(3,7),d.slice(7,14),d.slice(14,15)].filter(Boolean);
+  e.target.value=p.join('-');
+});
+
+$('exp').addEventListener('input',e=>{
+  let d=e.target.value.replace(/\D/g,'').slice(0,8);
+  let p=[d.slice(0,2),d.slice(2,4),d.slice(4,8)].filter(Boolean);
+  e.target.value=p.join(' / ');
+});
+
+$('file').addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  $('fn').textContent = f.name;
+  const reader = new FileReader();
+  reader.onload = ev => uploadedFileBase64 = ev.target.result;
+  reader.readAsDataURL(f);
+});
+
+$('f').addEventListener('submit', e => {
+  e.preventDefault();
+  let ok = true;
+  const set = (id, m) => { $('e-' + id).textContent = m; if (m) ok = false; };
+  
+  set('name', $('name').value.trim().length < 3 ? 'أدخل اسمك الكامل' : '');
+  set('eid', /^784-\d{4}-\d{7}-\d$/.test($('eid').value) ? '' : 'صيغة رقم الهوية غير صحيحة');
+  set('exp', $('exp').value.length < 10 ? 'أدخل تاريخ الصلاحية بشكل صحيح' : '');
+  
+  if(!faceImageBase64) {
+    set('face', 'يرجى التقاط صورة للوجه أولاً للمتابعة');
+  }
+
+  if (ok) {
+    // تخزين البيانات محلياً للتجربة المحلية
+    const userData = {
+      name: $('name').value.trim(),
+      eid: $('eid').value,
+      exp: $('exp').value,
+      face: faceImageBase64
+    };
+    localStorage.setItem('local_user_data', JSON.stringify(userData));
+
+    document.querySelector('.form').style.display = 'none';
+    const waitDiv = document.createElement('div');
+    waitDiv.style.cssText = 'text-align:center; padding:50px 20px; font-size:18px; font-weight:600;';
+    waitDiv.innerHTML = `
+      <div class="spinner"></div>
+      ⏳ جاري التحقق محلياً...<br>
+      <span style="font-size:14px; color:var(--muted); font-weight:normal; margin-top:8px; display:block;">جاري تجهيز بيانات الانتقال</span>
+    `;
+    document.querySelector('.card').appendChild(waitDiv);
+
+    setTimeout(() => {
+      waitDiv.innerHTML = '✅ تم التحقق بنجاح!';
+      // يمكنك توجيهه لصفحتك التالية محلياً متى شئت
+      // window.location.href = 'details.html';
+    }, 1500);
+  }
+});
+</script>
+</body>
+</html>
